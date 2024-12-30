@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双圆弧喷管计算</title>
+    <script>
+        function calculate() {
+            // 用户输入
+            const Rt = Number(document.getElementById("Rt").value) / 1000;
+            const rho = Number(document.getElementById("rho").value);
+            const epsilon_c = Number(document.getElementById("epsilon_c").value);
+            const k = Number(document.getElementById("k").value);
+            const Expansion_ratio = Number(document.getElementById("Expansion_ratio").value);
+            const Relative_length = Number(document.getElementById("Relative_length").value);
+            const Vc2 = Number(document.getElementById("Vc2").value) * 0.000000001;
+            const LL = Number(document.getElementById("LL").value);
+            const Expansion_Angle = Math.radians(Number(document.getElementById("Expansion_Angle").value));
+
+            // 计算
+            const Dt = Rt * 2;
+            const Rc = Math.sqrt(epsilon_c) * Rt;
+            const R1 = 1.5 * Rt;
+            const R2 = rho * Rc;
+            const Lc2 = Rt * Math.sqrt(Math.pow(k + rho * Math.sqrt(epsilon_c), 2) - Math.pow((rho - 1) * Math.sqrt(epsilon_c) + k + 1, 2));
+            const h = k / (k + rho * Math.sqrt(epsilon_c)) * Lc2;
+            const H = Lc2 - h;
+            const y = k * Rt + Rt - Math.sqrt(k * k * Rt * Rt - h * h);
+            const Ac = Math.PI * Math.pow(Rc, 2);
+            const Vc = Math.PI * Math.pow(Rt, 2) * LL;
+            const Lc1 = (Vc - Vc2) / Ac;
+            const De = Math.sqrt(Expansion_ratio) * Dt;
+            const beta_e = Math.radians(Expansion_Angle);
+            const R0_bar = (Math.pow(Relative_length, 2) + Math.pow(1.5 - De / (2 * Dt), 2) - 1) / (2 * (1 - Relative_length * Math.sin(beta_e) - (1.5 - De / (2 * Dt)) * Math.cos(beta_e)));
+            const R0 = R0_bar * Dt;
+            const Ln = Relative_length * Dt;
+            const X0 = Ln + R0 * Math.sin(beta_e);
+            const Y0 = R0 * Math.cos(beta_e) - De / 2;
+            const beta_m = Math.degrees(Math.asin((Ln + R0 * Math.sin(beta_e)) / (R0 + Dt)));
+
+            // 结果显示
+            document.getElementById("results").innerHTML = `
+                R1: ${(R1 * 1000).toFixed(6)} mm<br>
+                R2: ${(R2 * 1000).toFixed(6)} mm<br>
+                Lc2: ${(Lc2 * 1000).toFixed(6)} mm<br>
+                h: ${(h * 1000).toFixed(6)} mm<br>
+                H: ${(H * 1000).toFixed(6)} mm<br>
+                y: ${(y * 1000).toFixed(6)} mm<br>
+                Lc1: ${(Lc1 * 1000).toFixed(6)} mm<br>
+                De: ${(De * 1000).toFixed(6)} mm<br>
+                R0: ${(R0 * 1000).toFixed(6)} mm<br>
+                Ln: ${(Ln * 1000).toFixed(6)} mm<br>
+                X0: ${(X0 * 1000).toFixed(6)} mm<br>
+                Y0: ${(Y0 * 1000).toFixed(6)} mm<br>
+                βm: ${beta_m.toFixed(6)} 度
+            `;
+        }
+
+        Math.radians = function(degrees) {
+            return degrees * Math.PI / 180;
+        };
+
+        Math.degrees = function(radians) {
+            return radians * 180 / Math.PI;
+        };
+    </script>
+</head>
+<body>
+    <h1>双圆弧喷管计算</h1>
+
+    <label for="Rt">喉部半径 (mm): </label>
+    <input type="number" id="Rt"><br>
+
+    <label for="rho">rho: </label>
+    <input type="number" id="rho"><br>
+
+    <label for="epsilon_c">收缩比: </label>
+    <input type="number" id="epsilon_c"><br>
+
+    <label for="k">k: </label>
+    <input type="number" id="k"><br>
+
+    <label for="Expansion_ratio">扩张比: </label>
+    <input type="number" id="Expansion_ratio"><br>
+
+    <label for="Relative_length">相对长度: </label>
+    <input type="number" id="Relative_length"><br>
+
+    <label for="Vc2">收敛段容积 (mm³): </label>
+    <input type="number" id="Vc2"><br>
+
+    <label for="LL">特征长度 (m): </label>
+    <input type="number" id="LL"><br>
+
+    <label for="Expansion_Angle">扩张角度 (度): </label>
+    <input type="number" id="Expansion_Angle"><br>
+
+    <button onclick="calculate()">计算</button>
+
+    <h2>计算结果</h2>
+    <div id="results"></div>
+
+    <p>本软件由铼铱工业编写。如有任何问题反馈邮箱lseqy2024@outlook.com</p>
+</body>
+</html>
+

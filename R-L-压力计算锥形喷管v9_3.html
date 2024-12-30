@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>压力计算锥形喷管</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: inline-block;
+            width: 180px;
+            margin-bottom: 5px;
+        }
+        input {
+            padding: 5px;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            display: none;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+        .result-line {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>压力计算锥形喷管</h1>
+        
+        <div class="input-group">
+            <label for="D_in">入口直径 (mm):</label>
+            <input type="number" id="D_in" step="any" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="D_th">喉部直径 (mm):</label>
+            <input type="number" id="D_th" step="any" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="pc">室压 (MPa):</label>
+            <input type="number" id="pc" step="any" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="pe">出口压力 (MPa):</label>
+            <input type="number" id="pe" step="any" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="gamma">比热比:</label>
+            <input type="number" id="gamma" step="any" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="conv_angle">收敛半角 (度):</label>
+            <input type="number" id="conv_angle" step="any" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="div_angle">扩张半角 (度):</label>
+            <input type="number" id="div_angle" step="any" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="T1">燃烧室温度 (K):</label>
+            <input type="number" id="T1" step="any" required>
+        </div>
+        
+        <div class="input-group">
+            <label for="MM">平均分子量 (kg/kmol):</label>
+            <input type="number" id="MM" step="any" required>
+        </div>
+
+        <div class="input-group">
+            <label for="eta_c">预估喷管效率 (0-1):</label>
+            <input type="number" id="eta_c" step="any" min="0" max="1" required>
+        </div>
+        
+        <button onclick="calculate()">计算</button>
+        
+        <div class="results" id="results">
+            <h2>计算结果</h2>
+            <div class="result-line" id="area_ratio"></div>
+            <div class="result-line" id="mach"></div>
+            <div class="result-line" id="exit_diameter"></div>
+            <div class="result-line" id="conv_length"></div>
+            <div class="result-line" id="div_length"></div>
+        </div>
+
+        <div class="footer">
+            <p>本程序由铼铱工业编写</p>
+            <p>使用有任何问题反馈邮箱：lseqy2024@outlook.com</p>
+        </div>
+    </div>
+
+    <script>
+        function calc_expansion_ratio(P1, P2, gamma, T1, MM, eta_c) {
+            const R = 8314.46 / MM;
+            const PR = P2/P1;
+            const M = Math.sqrt((2/(gamma-1)) * ((1/PR)**((gamma-1)/gamma) - 1));
+            
+            const term1 = 2/(gamma+1);
+            const term2 = 1 + (gamma-1)/2 * M**2;
+            let A_ratio = (1/M) * ((term1 * term2)**((gamma+1)/(2*(gamma-1))));
+            A_ratio *= (1.0 + 0.1 * (1 - eta_c));
+            
+            return [A_ratio, M];
+        }
+
+        function calculate() {
+            // 获取输入值
+            const D_in = parseFloat(document.getElementById('D_in').value);
+            const D_th = parseFloat(document.getElementById('D_th').value);
+            const pc = parseFloat(document.getElementById('pc').value);
+            const pe = parseFloat(document.getElementById('pe').value);
+            const gamma = parseFloat(document.getElementById('gamma').value);
+            const conv_angle = parseFloat(document.getElementById('conv_angle').value);
+            const div_angle = parseFloat(document.getElementById('div_angle').value);
+            const T1 = parseFloat(document.getElementById('T1').value);
+            const MM = parseFloat(document.getElementById('MM').value);
+            const eta_c = parseFloat(document.getElementById('eta_c').value);
+
+            // 检查输入是否完整
+            if ([D_in, D_th, pc, pe, gamma, conv_angle, div_angle, T1, MM, eta_c].some(isNaN)) {
+                alert('请填写所有输入字段！');
+                return;
+            }
+
+            // 检查效率值是否在有效范围内
+            if (eta_c < 0 || eta_c > 1) {
+                alert('喷管效率必须在0到1之间！');
+                return;
+            }
+
+            // 转换压力单位并计算
+            const P1 = pc * 1e6;
+            const P2 = pe * 1e6;
+            
+            const [A_ratio, M] = calc_expansion_ratio(P1, P2, gamma, T1, MM, eta_c);
+            
+            // 计算其他参数
+            const A_th = Math.PI * (D_th/2)**2;
+            const A_exit = A_ratio * A_th;
+            const D_exit = Math.sqrt(4 * A_exit / Math.PI);
+            
+            const L_conv = ((D_in - D_th) / 2) / Math.tan(conv_angle * Math.PI / 180);
+            const L_div = ((D_exit - D_th) / 2) / Math.tan(div_angle * Math.PI / 180);
+
+            // 显示结果
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('area_ratio').textContent = `面积比 (Ae/At): ${A_ratio.toFixed(4)}`;
+            document.getElementById('mach').textContent = `出口马赫数: ${M.toFixed(4)}`;
+            document.getElementById('exit_diameter').textContent = `出口直径: ${D_exit.toFixed(2)} mm`;
+            document.getElementById('conv_length').textContent = `收敛段长度: ${L_conv.toFixed(2)} mm`;
+            document.getElementById('div_length').textContent = `扩张段长度: ${L_div.toFixed(2)} mm`;
+        }
+    </script>
+</body>
+</html>
